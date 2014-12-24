@@ -123,6 +123,33 @@ def search(request):
 			return HttpResponse(json.dumps(response), content_type="application/json")
 	else:
 		return HttpResponse("This should be done in a POST method!")
+
+# 返回好友列表
+def friends(request):
+	if request.method == 'POST':
+		username = request.POST['username']
+		# code = 1: 用户名不存在
+		response = {'code': 1}
+		userinfo = request.session.get('onlineuser', None)
+		# 验证是否已登录
+		if userinfo:
+			try:
+				user = User.objects.get(username=username)
+				list = user.friends.all()
+				response = {'count': len(list)}
+				fri_list = []
+				for i in list:
+					fri_list.append({'nickname': i.username})
+				response['user'] = fri_list
+				return HttpResponse(json.dumps(response), content_type="application/json")
+			except:
+				return HttpResponse(json.dumps(response), content_type="application/json")
+		else:
+			# code = 2: 用户未登录
+			response['code'] = 2
+			return HttpResponse(json.dumps(response), content_type="application/json")
+	else:
+		return HttpResponse("This should be done in a POST method!")
 		
 # 发送消息
 def send(request):

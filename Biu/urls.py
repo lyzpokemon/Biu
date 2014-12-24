@@ -14,5 +14,6 @@ urlpatterns = patterns('',
 	url(r'^add$', views.add),
 	url(r'^heartbeat$', views.heartbeat),
 	url(r'^search$', views.search),
+	url(r'^friends$', views.friends),
 	url(r'^send$', views.send),
 )
