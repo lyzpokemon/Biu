@@ -190,22 +190,22 @@ def friends(request):
 		response = {'code': 1}
 		userinfo = request.session.get('onlineuser', None)
 		# 验证是否已登录
-		if userinfo:
-			try:
-				user = User.objects.get(username=username)
-				list = user.friends.all()
-				response = {'count': len(list)}
-				fri_list = []
-				for i in list:
-					fri_list.append({'nickname': i.username})
-				response['users'] = fri_list
-				return HttpResponse(json.dumps(response), content_type="application/json")
-			except:
-				return HttpResponse(json.dumps(response), content_type="application/json")
-		else:
-			# code = 2: 用户未登录
-			response['code'] = 2
+		#if userinfo:
+		try:
+			user = User.objects.get(username=username)
+			list = user.friends.all()
+			response = {'count': len(list)}
+			fri_list = []
+			for i in list:
+				fri_list.append({'nickname': i.username})
+			response['users'] = fri_list
 			return HttpResponse(json.dumps(response), content_type="application/json")
+		except:
+			return HttpResponse(json.dumps(response), content_type="application/json")
+		#else:
+			# code = 2: 用户未登录
+			#response['code'] = 2
+			#return HttpResponse(json.dumps(response), content_type="application/json")
 	else:
 		return HttpResponse("This should be done in a POST method!")
 		
