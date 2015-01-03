@@ -70,24 +70,25 @@ def add(request):
 	if request.method == 'POST':
 		username = request.POST['username']
 		target = request.POST['target']
+		op = request.POST['op']
 		# code = 1: 目标用户名不存在
 		response = {'code': 1}
 		userinfo = request.session.get('onlineuser', None)
 		# 验证是否已登录
-		if userinfo:
-			try:
-				user1 = User.objects.get(username=username)
-				user2 = User.objects.get(username=target)
-				user1.friends.add(user2)
-				# code = 0: OK
-				response['code'] = 0
-				return HttpResponse(json.dumps(response), content_type="application/json")
-			except:
-				return HttpResponse(json.dumps(response), content_type="application/json")
-		else:
-			# code = 2: 用户未登录
-			response['code'] = 2
+		#if userinfo:
+		try:
+			user1 = User.objects.get(username=username)
+			user2 = User.objects.get(username=target)
+			user1.friends.add(user2)
+			# code = 0: OK
+			response['code'] = 0
 			return HttpResponse(json.dumps(response), content_type="application/json")
+		except:
+			return HttpResponse(json.dumps(response), content_type="application/json")
+		#else:
+		# code = 2: 用户未登录
+		#	response['code'] = 2
+		#	return HttpResponse(json.dumps(response), content_type="application/json")
 	else:
 		return HttpResponse("This should be done in a POST method!")
 
@@ -147,38 +148,41 @@ def search(request):
 		response = {'code': 1}
 		userinfo = request.session.get('onlineuser', None)
 		# 验证是否已登录
-		if userinfo:
-			try:
-				users = User.objects.all();
-				user = users.get(username=username)
-				user_list = users.exclude(username=username)
-				# 换算为平面坐标角度
-				direction = (-direction + 360 + 90) % 360
-				# 斜率
-				k = tan(radians(direction))
-				# b = y - kx
-				b = user.latitude - k * user.longitude
-				biued_list = []
-				# 方向直线是垂线或水平线
-				if (equal(direction, 90, 1e-2) or equal(direction, 270, 1e-2) or equal(direction, 0, 1e-2) or equal(direction, 360, 1e-2) or equal(direction, 180, 1e-2)):
-					for i in user_list:
-						if isbiued_special(direction, user.longitude, user.latitude, i.longitude, i.latitude, 1e-2):
-							biued_list.append({'nickname': i.username})
-				# 其它
-				else:
-					for i in user_list:
-						if isbiued(direction, k, b, user, i, 1e-2):
-							biued_list.append({'nickname': i.username})
-				response = {'count': len(biued_list)}
-				response['users'] = biued_list
-				response['code'] = 0
-				return HttpResponse(json.dumps(response), content_type="application/json")
-			except:
-				return HttpResponse(json.dumps(response), content_type="application/json")
-		else:
-			# code = 2: 用户未登录
-			response['code'] = 2
+		#if userinfo:
+		try:
+			users = User.objects.all();
+			user = users.get(username=username)
+			user_list = users.exclude(username=username)
+			# 换算为平面坐标角度
+			direction = (-direction + 360 + 90) % 360
+			# 斜率
+			k = tan(radians(direction))
+			# b = y - kx
+			b = user.latitude - k * user.longitude
+			biued_list = []
+			# 方向直线是垂线或水平线
+			if (equal(direction, 90, 1e-2) or equal(direction, 270, 1e-2) or equal(direction, 0, 1e-2) or equal(direction, 360, 1e-2) or equal(direction, 180, 1e-2)):
+				for i in user_list:
+					if isbiued_special(direction, user.longitude, user.latitude, i.longitude, i.latitude, 1e-2):
+						biued_list.append({'nickname': i.username})
+						send_msg(target=i.username, title="Biu", msg=username + " biu 中了你 !")
+			# 其它
+			else:
+				for i in user_list:
+					if isbiued(direction, k, b, user, i, 1e-2):
+						biued_list.append({'nickname': i.username})
+						send_msg(target=i.username, title="Biu", msg=username + " biu 中了你 !")
+			response = {'count': len(biued_list)}
+			response['users'] = biued_list
+			response['code'] = 0
 			return HttpResponse(json.dumps(response), content_type="application/json")
+		except Exception, e:
+			print e
+			return HttpResponse(json.dumps(response), content_type="application/json")
+		#else:
+			# code = 2: 用户未登录
+			#response['code'] = 2
+			#return HttpResponse(json.dumps(response), content_type="application/json")
 	else:
 		return HttpResponse("This should be done in a POST method!")
 
@@ -209,6 +213,16 @@ def friends(request):
 	else:
 		return HttpResponse("This should be done in a POST method!")
 		
+# 带参发送消息
+def send_msg(target, title, msg):
+	_jpush = jpush.JPush(app_key, master_secret)
+	push = _jpush.create_push()
+	push.audience = jpush.audience(jpush.alias(target))
+	android_msg = jpush.android(alert=msg, title=title)
+	push.notification = jpush.notification(alert=msg, android=android_msg)
+	push.platform = jpush.all_
+	push.send()
+
 # 发送消息
 def send(request):
 	if request.method == 'POST':
@@ -219,28 +233,21 @@ def send(request):
 		response = {'code': 1}
 		userinfo = request.session.get('onlineuser', None)
 		# 验证是否已登录
-		if userinfo:
-			try:
-				user = User.objects.get(username=target)
-				_jpush = jpush.JPush(app_key, master_secret)
-				push = _jpush.create_push()
-				push.audience = jpush.audience(jpush.alias(target))
-				android_msg = jpush.android(alert=msg, title="From "+username)
-				push.notification = jpush.notification(alert=msg, android=android_msg)
-				push.platform = jpush.all_
-				push.send()
-				# code = 0: OK
-				response['code'] = 0
-				return HttpResponse(json.dumps(response), content_type="application/json")
-			except:
-				return HttpResponse(json.dumps(response), content_type="application/json")
-		else:
-			# code = 2: 用户未登录
-			response['code'] = 2
+		#if userinfo:
+		try:
+			user = User.objects.get(username=target)
+			send_msg(target=target, title="BiuChat", msg=msg)
+			# code = 0: OK
+			response['code'] = 0
 			return HttpResponse(json.dumps(response), content_type="application/json")
+		except:
+			return HttpResponse(json.dumps(response), content_type="application/json")
+		#else:
+			# code = 2: 用户未登录
+			#response['code'] = 2
+			#return HttpResponse(json.dumps(response), content_type="application/json")
 	else:
 		return HttpResponse("This should be done in a POST method!")
-		
 
 # 返回biu中目标列表
 def search_debug(request):
@@ -253,37 +260,37 @@ def search_debug(request):
 		response = {'code': 1}
 		userinfo = request.session.get('onlineuser', None)
 		# 验证是否已登录
-		if userinfo:
-			try:
-				users = User.objects.all();
-				user = users.get(username=username)
-				user_list = users.exclude(username=username)
-				# 换算为平面坐标角度
-				direction = (-direction + 360 + 90) % 360
-				# 斜率
-				k = tan(radians(direction))
-				# b = y - kx
-				b = user.latitude - k * user.longitude
-				biued_list = []
-				# 方向直线是垂线或水平线
-				if (equal(direction, 90, 1e-2) or equal(direction, 270, 1e-2) or equal(direction, 0, 1e-2) or equal(direction, 360, 1e-2) or equal(direction, 180, 1e-2)):
-					for i in user_list:
-						if isbiued_special(direction, user.longitude, user.latitude, i.longitude, i.latitude, error1):
-							biued_list.append({'nickname': i.username})
-				# 其它
-				else:
-					for i in user_list:
-						if isbiued(direction, k, b, user, i, error2):
-							biued_list.append({'nickname': i.username})
-				response = {'count': len(biued_list)}
-				response['users'] = biued_list
-				response['code'] = 0
-				return HttpResponse(json.dumps(response), content_type="application/json")
-			except:
-				return HttpResponse(json.dumps(response), content_type="application/json")
-		else:
-			# code = 2: 用户未登录
-			response['code'] = 2
+		#if userinfo:
+		try:
+			users = User.objects.all();
+			user = users.get(username=username)
+			user_list = users.exclude(username=username)
+			# 换算为平面坐标角度
+			direction = (-direction + 360 + 90) % 360
+			# 斜率
+			k = tan(radians(direction))
+			# b = y - kx
+			b = user.latitude - k * user.longitude
+			biued_list = []
+			# 方向直线是垂线或水平线
+			if (equal(direction, 90, 1e-2) or equal(direction, 270, 1e-2) or equal(direction, 0, 1e-2) or equal(direction, 360, 1e-2) or equal(direction, 180, 1e-2)):
+				for i in user_list:
+					if isbiued_special(direction, user.longitude, user.latitude, i.longitude, i.latitude, error1):
+						biued_list.append({'nickname': i.username})
+			# 其它
+			else:
+				for i in user_list:
+					if isbiued(direction, k, b, user, i, error2):
+						biued_list.append({'nickname': i.username})
+			response = {'count': len(biued_list)}
+			response['users'] = biued_list
+			response['code'] = 0
 			return HttpResponse(json.dumps(response), content_type="application/json")
+		except:
+			return HttpResponse(json.dumps(response), content_type="application/json")
+		#else:
+			# code = 2: 用户未登录
+			#response['code'] = 2
+			#return HttpResponse(json.dumps(response), content_type="application/json")
 	else:
 		return HttpResponse("This should be done in a POST method!")
