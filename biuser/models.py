@@ -26,6 +26,8 @@ class User(AbstractBaseUser):
 	mobile = models.CharField(max_length=100, null=True, unique=True, db_index=True)
 	is_admin = models.BooleanField(default=False)
 	friends = models.ManyToManyField('self')
+	latitude = models.FloatField(default=0, null=True)
+	longitude = models.FloatField(default=0, null=True)
 	
 	USERNAME_FIELD = 'username'
 	objects = UserManager()
