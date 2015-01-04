@@ -130,6 +130,18 @@ def isbiued_special(dir, x0, y0, x, y, error):
 	if equal(dir, 180, 1e-2):
 		return (x0 >= x) and equal(y0, y, error)
 	return False
+	
+# 判断为垂直或平行方向时目标坐标在误差范围内是否在直线上
+def isbiued_special_debug(dir, x0, y0, x, y, error_xy, error):
+	if equal(dir, 90, error_xy):
+		return (y0 <= y) and equal(x0, x, error)
+	if equal(dir, 270, error_xy):
+		return (y0 >= y) and equal(x0, x, error)
+	if (equal(dir, 0, error_xy) or equal(dir, 360, error_xy)):
+		return (x0 <= x) and equal(y0, y, error)
+	if equal(dir, 180, error_xy):
+		return (x0 >= x) and equal(y0, y, error)
+	return False
 
 # 判断目标坐标是否在直线上
 def isbiued(dir, k, b, user_a, user_b, error):
@@ -161,7 +173,7 @@ def search(request):
 			b = user.latitude - k * user.longitude
 			biued_list = []
 			# 方向直线是垂线或水平线
-			if (equal(direction, 90, 1e-2) or equal(direction, 270, 1e-2) or equal(direction, 0, 1e-2) or equal(direction, 360, 1e-2) or equal(direction, 180, 1e-2)):
+			if (equal(direction, 90, 1e-3) or equal(direction, 270, 1e-3) or equal(direction, 0, 1e-3) or equal(direction, 360, 1e-3) or equal(direction, 180, 1e-3)):
 				for i in user_list:
 					if isbiued_special(direction, user.longitude, user.latitude, i.longitude, i.latitude, 1e-2):
 						biued_list.append({'nickname': i.username})
@@ -260,6 +272,7 @@ def search_debug(request):
 	if request.method == 'POST':
 		username = request.POST['username']
 		direction = float(request.POST['direction'])
+		error_xy = float(request.POST['error_xy'])
 		error1 = float(request.POST['error1'])
 		error2 = float(request.POST['error2'])
 		# code = 1: 用户名不存在
@@ -279,9 +292,9 @@ def search_debug(request):
 			b = user.latitude - k * user.longitude
 			biued_list = []
 			# 方向直线是垂线或水平线
-			if (equal(direction, 90, 1e-2) or equal(direction, 270, 1e-2) or equal(direction, 0, 1e-2) or equal(direction, 360, 1e-2) or equal(direction, 180, 1e-2)):
+			if (equal(direction, 90, error_xy) or equal(direction, 270, error_xy) or equal(direction, 0, error_xy) or equal(direction, 360, error_xy) or equal(direction, 180, error_xy)):
 				for i in user_list:
-					if isbiued_special(direction, user.longitude, user.latitude, i.longitude, i.latitude, error1):
+					if isbiued_special_debug(direction, user.longitude, user.latitude, i.longitude, i.latitude, error_xy, error1):
 						biued_list.append({'nickname': i.username})
 						try:
 							send_msg(username=username, target=i.username, title="Biu", msg="You are BIUed by " + username + " !")
