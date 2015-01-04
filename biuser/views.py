@@ -175,7 +175,7 @@ def search(request):
 					if isbiued(direction, k, b, user, i, 1e-2):
 						biued_list.append({'nickname': i.username})
 						try:
-							send_msg(username=username, target=i.username, title="Biu", msg="You are BIUed by " + username + " !"
+							send_msg(username=username, target=i.username, title="Biu", msg="You are BIUed by " + username + " !")
 						except Exception, e:
 							print e
 			response = {'count': len(biued_list)}
