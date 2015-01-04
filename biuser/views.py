@@ -166,7 +166,7 @@ def search(request):
 					if isbiued_special(direction, user.longitude, user.latitude, i.longitude, i.latitude, 1e-2):
 						biued_list.append({'nickname': i.username})
 						try:
-							send_msg(username=username, target=i.username, title="Biu", msg=username + " biu 中了你 !")
+							send_msg(username=username, target=i.username, title="Biu", msg="You are BIUed by " + username + " !")
 						except Exception, e:
 							print e
 			# 其它
@@ -175,7 +175,7 @@ def search(request):
 					if isbiued(direction, k, b, user, i, 1e-2):
 						biued_list.append({'nickname': i.username})
 						try:
-							send_msg(username=username, target=i.username, title="Biu", msg=username + " biu 中了你 !")
+							send_msg(username=username, target=i.username, title="Biu", msg="You are BIUed by " + username + " !"
 						except Exception, e:
 							print e
 			response = {'count': len(biued_list)}
@@ -284,7 +284,7 @@ def search_debug(request):
 					if isbiued_special(direction, user.longitude, user.latitude, i.longitude, i.latitude, error1):
 						biued_list.append({'nickname': i.username})
 						try:
-							send_msg(username=username, target=i.username, title="Biu", msg=username + " biu 中了你 !")
+							send_msg(username=username, target=i.username, title="Biu", msg="You are BIUed by " + username + " !")
 						except Exception, e:
 							print e
 			# 其它
@@ -293,7 +293,7 @@ def search_debug(request):
 					if isbiued(direction, k, b, user, i, error2):
 						biued_list.append({'nickname': i.username})
 						try:
-							send_msg(username=username, target=i.username, title="Biu", msg=username + " biu 中了你 !")
+							send_msg(username=username, target=i.username, title="Biu", msg="You are BIUed by " + username + " !")
 						except Exception, e:
 							print e
 			response = {'count': len(biued_list)}
