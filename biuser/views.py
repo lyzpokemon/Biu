@@ -165,13 +165,19 @@ def search(request):
 				for i in user_list:
 					if isbiued_special(direction, user.longitude, user.latitude, i.longitude, i.latitude, 1e-2):
 						biued_list.append({'nickname': i.username})
-						send_msg(target=i.username, title="Biu", msg=username + " biu 中了你 !")
+						try:
+							send_msg(username=username, target=i.username, title="Biu", msg=username + " biu 中了你 !")
+						except Exception, e:
+							print e
 			# 其它
 			else:
 				for i in user_list:
 					if isbiued(direction, k, b, user, i, 1e-2):
 						biued_list.append({'nickname': i.username})
-						send_msg(target=i.username, title="Biu", msg=username + " biu 中了你 !")
+						try:
+							send_msg(username=username, target=i.username, title="Biu", msg=username + " biu 中了你 !")
+						except Exception, e:
+							print e
 			response = {'count': len(biued_list)}
 			response['users'] = biued_list
 			response['code'] = 0
@@ -214,11 +220,11 @@ def friends(request):
 		return HttpResponse("This should be done in a POST method!")
 		
 # 带参发送消息
-def send_msg(target, title, msg):
+def send_msg(username, target, title, msg):
 	_jpush = jpush.JPush(app_key, master_secret)
 	push = _jpush.create_push()
 	push.audience = jpush.audience(jpush.alias(target))
-	android_msg = jpush.android(alert=msg, title=title)
+	android_msg = jpush.android(alert=msg, title=title, extras={'username': username})
 	push.notification = jpush.notification(alert=msg, android=android_msg)
 	push.platform = jpush.all_
 	push.send()
@@ -236,7 +242,7 @@ def send(request):
 		#if userinfo:
 		try:
 			user = User.objects.get(username=target)
-			send_msg(target=target, title="BiuChat", msg=msg)
+			send_msg(username=username, target=target, title="BiuChat", msg=msg)
 			# code = 0: OK
 			response['code'] = 0
 			return HttpResponse(json.dumps(response), content_type="application/json")
@@ -277,11 +283,19 @@ def search_debug(request):
 				for i in user_list:
 					if isbiued_special(direction, user.longitude, user.latitude, i.longitude, i.latitude, error1):
 						biued_list.append({'nickname': i.username})
+						try:
+							send_msg(username=username, target=i.username, title="Biu", msg=username + " biu 中了你 !")
+						except Exception, e:
+							print e
 			# 其它
 			else:
 				for i in user_list:
 					if isbiued(direction, k, b, user, i, error2):
 						biued_list.append({'nickname': i.username})
+						try:
+							send_msg(username=username, target=i.username, title="Biu", msg=username + " biu 中了你 !")
+						except Exception, e:
+							print e
 			response = {'count': len(biued_list)}
 			response['users'] = biued_list
 			response['code'] = 0
