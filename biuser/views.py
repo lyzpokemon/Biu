@@ -70,7 +70,6 @@ def add(request):
 	if request.method == 'POST':
 		username = request.POST['username']
 		target = request.POST['target']
-		op = request.POST['op']
 		# code = 1: 目标用户名不存在
 		response = {'code': 1}
 		userinfo = request.session.get('onlineuser', None)
